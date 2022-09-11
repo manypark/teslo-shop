@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { Product } from './entities/product.entity';
 import { ProductsService } from './products.service';
 import { ProductsController } from './products.controller';
+
+import { Product, ProductImage } from './entities/index';
 
 @Module({
   controllers: [
@@ -13,7 +14,10 @@ import { ProductsController } from './products.controller';
     ProductsService
   ],
   imports: [
-    TypeOrmModule.forFeature([Product])
+    TypeOrmModule.forFeature([
+      Product,
+      ProductImage
+    ])
   ]
 })
 export class ProductsModule {}
