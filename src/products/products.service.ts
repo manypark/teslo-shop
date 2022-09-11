@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { validate as isUUID } from "uuid";
 
 import { Product, ProductImage } from './entities/index';
@@ -18,7 +18,9 @@ export class ProductsService {
     private readonly productRepository : Repository<Product>,
 
     @InjectRepository( ProductImage ) 
-    private readonly productIamgeRepository : Repository<ProductImage>,
+    private readonly productImageRepository : Repository<ProductImage>,
+
+    private readonly dataSource:DataSource,
   ) {}
 
   async create( createProductDto : CreateProductDto ) {
@@ -29,7 +31,7 @@ export class ProductsService {
 
       const product = this.productRepository.create( { 
           ...productDetails,
-          images: images.map( image => this.productIamgeRepository.create({ url: image }) )
+          images: images.map( image => this.productImageRepository.create({ url: image }) )
         }
       );
       await this.productRepository.save( product );
@@ -82,19 +84,49 @@ export class ProductsService {
     return { ...product, images: images.map( img => img.url ) };
   }
 
-  async update(id: string, updateProductDto: UpdateProductDto) {
+  async update( idProduct: string, updateProductDto: UpdateProductDto ) {
 
-    const product = await this.productRepository.preload({ id: id, ...updateProductDto, images:[] });
+    const { images, ...toUpdate } = updateProductDto;
 
-    if( !product ) throw new NotFoundException(`Product with id: ${id} not found`);
+    const product = await this.productRepository.preload({ id: idProduct, ...toUpdate });
+
+    if( !product ) throw new NotFoundException(`Product with id: ${idProduct} not found`);
+
+    // query runner
+    const query = this.dataSource.createQueryRunner();
+    //conexion a db
+    await query.connect();
+    //se empieza las transacciones
+    await query.startTransaction();
 
     try {
-      await this.productRepository.save( product );
+
+      // se valida si vienen nuevas imagenes
+      if ( images ) {
+        await query.manager.delete( ProductImage, { product: { id: idProduct } } );
+        product.images = images.map( img => this.productImageRepository.create( { url: img }) );
+      }
+
+      await query.manager.save( product );
+
+      await query.commitTransaction();
+      await query.release();
+
+      // await this.productRepository.save( product );
+
+      // return product;
+
+      // para que se vena las iamgenes cuando no se manda en el json para actualizar
+      return this.findOnePlain( idProduct );
+
     } catch (error) {
+
+      await query.rollbackTransaction();
+      await query.release();
+
       this.handleErrors( error );
     }
 
-    return product;
   }
 
   async remove( id: string ) {
@@ -107,6 +139,22 @@ export class ProductsService {
 
       this.logger.error(error);
       throw new InternalServerErrorException("Unexpected error, check logs");
+  }
+
+  async deleteAllProducts() {
+    const query = this.productRepository.createQueryBuilder('product');
+
+    try {
+
+      return await query
+      .delete()
+      .where({})
+      .execute();
+      
+    } catch (error) {
+      this.handleErrors(error);
+    }
+
   }
 
 }
