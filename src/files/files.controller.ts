@@ -13,9 +13,7 @@ export class FilesController {
   constructor(
     private readonly filesService   : FilesService,
     private readonly configServices : ConfigService
-  ) {
-
-  }
+  ) { }
 
   @Get('product/:imageName')
   findProductImage( @Res() res: Response,  @Param('imageName') imageName:string ) {
