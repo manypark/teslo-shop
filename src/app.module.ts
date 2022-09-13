@@ -19,10 +19,11 @@ import { FilesModule } from './files/files.module';
       synchronize : true,
       autoLoadEntities: true,
     }),
+    
     ProductsModule,
     CommonModule,
     SeedModule,
-    FilesModule
+    FilesModule,
   ],
 })
 
