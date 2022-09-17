@@ -23,6 +23,11 @@ export class ProductsService {
     private readonly dataSource:DataSource,
   ) {}
 
+  /**
+   * We're creating a new product, and then saving it to the database
+   * @param {CreateProductDto} createProductDto - CreateProductDto
+   * @returns The product object with the images array.
+   */
   async create( createProductDto : CreateProductDto ) {
 
     try {
@@ -41,6 +46,14 @@ export class ProductsService {
 
   }
 
+  /**
+   * It takes a paginationDTO object, destructures it to get the limit and offset values, then uses
+   * those values to query the database for products, and returns the products
+   * @param {PaginationDto} paginationDTO - This is the object that will be passed in from the controller.
+   * @returns - The products array is being returned.
+   *   - The products array is being mapped to return a new array.
+   *   - The new array is being returned.
+   */
   async findAll( paginationDTO:PaginationDto ) {
 
     const  { limit = 10, offset = 0 } = paginationDTO;
@@ -59,6 +72,12 @@ export class ProductsService {
     }));
   }
 
+  /**
+   * It takes a string as an argument, checks if it's a valid UUID, if it is, it searches for a product
+   * by id, if it's not, it searches for a product by title or slug
+   * @param {string} term - string - The term to search for.
+   * @returns A product object
+   */
   async findOne( term : string ) {
 
     let product: Product;
@@ -79,11 +98,25 @@ export class ProductsService {
     return product;
   }
 
+  /**
+   * It takes a term, finds a product, and returns the product with the images array replaced by an
+   * array of image URLs
+   * @param {string} term - The term to search for.
+   * @returns The product object with the images array mapped to only return the url.
+   */
   async findOnePlain( term:string ) {
     const { images = [], ...product } = await this.findOne( term );
     return { ...product, images: images.map( img => img.url ) };
   }
 
+  /**
+   * We're using a query runner to start a transaction, then we're deleting all the images associated
+   * with the product, then we're saving the product, then we're committing the transaction, then we're
+   * releasing the query runner
+   * @param {string} idProduct - string
+   * @param {UpdateProductDto} updateProductDto - UpdateProductDto
+   * @returns The product with the updated information.
+   */
   async update( idProduct: string, updateProductDto: UpdateProductDto ) {
 
     const { images, ...toUpdate } = updateProductDto;
@@ -129,10 +162,19 @@ export class ProductsService {
 
   }
 
+  /**
+   * It removes a product from the database
+   * @param {string} id - string - The id of the product to be deleted.
+   */
   async remove( id: string ) {
     await this.productRepository.remove( await this.findOne( id ) );
   }
 
+  /**
+   * If the error code is 23505, throw a BadRequestException, otherwise throw an
+   * InternalServerErrorException
+   * @param {any} error - The error object that was thrown
+   */
   private handleErrors( error:any ) {
     if( error.code === '23505')
       throw new BadRequestException(error.detail);
@@ -141,6 +183,10 @@ export class ProductsService {
       throw new InternalServerErrorException("Unexpected error, check logs");
   }
 
+  /**
+   * It deletes all products from the database
+   * @returns The number of rows deleted.
+   */
   async deleteAllProducts() {
     const query = this.productRepository.createQueryBuilder('product');
 
