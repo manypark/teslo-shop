@@ -1,17 +1,20 @@
 import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { JwtService } from "@nestjs/jwt";
 import { Repository } from 'typeorm';
 import * as bcrypt from "bcrypt";
 
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto';
+import { JwtPayload } from './interfaces/jwt-payload';
 
 @Injectable()
 export class AuthService {
 
   constructor(
-    @InjectRepository( User ) private readonly userRepository: Repository<User>
+    @InjectRepository( User ) private readonly userRepository: Repository<User>,
+    private readonly jwtService : JwtService
   ){ }
 
   /**
@@ -32,8 +35,7 @@ export class AuthService {
       await this.userRepository.save( user );
       delete user.password;
 
-      return user;
-
+      return { ...user, token: this.getJwtoken({ email: user.email}) };
     } catch (error) {
       this.handleErrors( error );
     }
@@ -63,7 +65,17 @@ export class AuthService {
     if( !bcrypt.compareSync(password, user.password ) ) 
     throw new UnauthorizedException("Credentials are not found");
 
-    return user;
+    return { ...user, token: this.getJwtoken({ email: user.email}) };
+  }
+
+  /**
+   * It takes a payload object, signs it with the jwtService, and returns the token
+   * @param {JwtPayload} payload - JwtPayload - this is the object that will be used to create the token.
+   * @returns A JWT token
+   */
+  private getJwtoken( payload: JwtPayload ) : string  {
+    const token = this.jwtService.sign( payload );
+    return token;
   }
   
   /**
