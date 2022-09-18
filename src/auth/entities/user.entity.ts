@@ -14,7 +14,8 @@ export class User {
 
     @Column( 'text' , {
         unique  : true,
-        nullable: true
+        nullable: true,
+        select  : false
     })
     password:string;
 
