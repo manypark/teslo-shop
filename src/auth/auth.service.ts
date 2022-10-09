@@ -35,7 +35,7 @@ export class AuthService {
       await this.userRepository.save( user );
       delete user.password;
 
-      return { ...user, token: this.getJwtoken({ email: user.email}) };
+      return { ...user, token: this.getJwtoken({ id: user.id }) };
     } catch (error) {
       this.handleErrors( error );
     }
@@ -56,7 +56,7 @@ export class AuthService {
 
     const user = await this.userRepository.findOne({
       where : { email },
-      select: { email: true, password: true },
+      select: { id:true, email: true, password: true },
     });
 
     if( !user) 
@@ -65,7 +65,7 @@ export class AuthService {
     if( !bcrypt.compareSync(password, user.password ) ) 
     throw new UnauthorizedException("Credentials are not found");
 
-    return { ...user, token: this.getJwtoken({ email: user.email}) };
+    return { ...user, token: this.getJwtoken({ id: user.id }) };
   }
 
   /**
@@ -76,6 +76,10 @@ export class AuthService {
   private getJwtoken( payload: JwtPayload ) : string  {
     const token = this.jwtService.sign( payload );
     return token;
+  }
+
+  checkAuthStatu( user : User) {
+    return { ...user, token: this.getJwtoken({ id: user.id }) };
   }
   
   /**

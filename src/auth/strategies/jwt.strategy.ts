@@ -22,10 +22,16 @@ export class JwtStrategy extends PassportStrategy( Strategy ) {
     }
 
 
+    /**
+     * It takes a JwtPayload object as a parameter, and returns a Promise of a User object
+     * @param {JwtPayload} payload - JwtPayload - The payload that was passed to the JWT when it was
+     * created.
+     * @returns The user object
+     */
     async validate ( payload : JwtPayload ): Promise<User> {
 
-        const { email } = payload;
-        const user = await this.userRepository.findOneBy({ email });
+        const { id } = payload;
+        const user = await this.userRepository.findOneBy({ id });
 
         if( !user ) throw new UnauthorizedException('Token not valid');
 

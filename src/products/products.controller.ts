@@ -4,6 +4,10 @@ import { ProductsService } from './products.service';
 import { PaginationDto } from 'src/common/pagination.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { Auth } from 'src/auth/decorators/auth.decorator';
+import { ValidRoles } from 'src/auth/interfaces/valid-roles';
+import { GetUser } from 'src/auth/decorators/get-user.decorators';
+import { User } from 'src/auth/entities/user.entity';
 
 @Controller('products')
 export class ProductsController {
@@ -16,8 +20,12 @@ export class ProductsController {
   the request. It is calling the create method in the productsService and passing in the
   CreateProductDto object. */
   @Post()
-  create( @Body() createProductDto : CreateProductDto ) {
-    return this.productsService.create(createProductDto);
+  @Auth()
+  create( 
+    @Body() createProductDto : CreateProductDto,
+    @GetUser() user : User
+  ) {
+    return this.productsService.create( createProductDto, user );
   }
 
   /* A GET request to the route /products. It is expecting a PaginationDto object in the query string
@@ -41,17 +49,20 @@ export class ProductsController {
   update
     method in the productsService and passing in the string and UpdateProductDto object. */
   @Patch(':id')
+  @Auth( ValidRoles.admin )
   update(
-    @Param('id') id: string, 
+    @Param('id') id: string,
     @Body() updateProductDto: UpdateProductDto,
+    @GetUser() user : User
   ) {
-    return this.productsService.update( id, updateProductDto );
+    return this.productsService.update( id, updateProductDto, user );
   }
 
   /* A DELETE request to the route /products/:id. It is expecting a string in the route
   parameter :id. It is calling the remove method in the productsService and passing in the
   string. */
   @Delete(':id')
+  @Auth( ValidRoles.admin )
   remove(@Param('id', ParseUUIDPipe ) id: string) {
     return this.productsService.remove( id );
   }

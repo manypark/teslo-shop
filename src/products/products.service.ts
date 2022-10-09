@@ -7,6 +7,7 @@ import { Product, ProductImage } from './entities/index';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { PaginationDto } from 'src/common/pagination.dto';
+import { User } from 'src/auth/entities/user.entity';
 
 @Injectable()
 export class ProductsService {
@@ -28,7 +29,7 @@ export class ProductsService {
    * @param {CreateProductDto} createProductDto - CreateProductDto
    * @returns The product object with the images array.
    */
-  async create( createProductDto : CreateProductDto ) {
+  async create( createProductDto : CreateProductDto, user: User ) {
 
     try {
 
@@ -36,7 +37,8 @@ export class ProductsService {
 
       const product = this.productRepository.create( { 
           ...productDetails,
-          images: images.map( image => this.productImageRepository.create({ url: image }) )
+          images: images.map( image => this.productImageRepository.create({ url: image }) ),
+          user
         }
       );
       await this.productRepository.save( product );
@@ -117,7 +119,7 @@ export class ProductsService {
    * @param {UpdateProductDto} updateProductDto - UpdateProductDto
    * @returns The product with the updated information.
    */
-  async update( idProduct: string, updateProductDto: UpdateProductDto ) {
+  async update( idProduct: string, updateProductDto: UpdateProductDto, user : User ) {
 
     const { images, ...toUpdate } = updateProductDto;
 
@@ -140,6 +142,7 @@ export class ProductsService {
         product.images = images.map( img => this.productImageRepository.create( { url: img }) );
       }
 
+      product.user = user;
       await query.manager.save( product );
 
       await query.commitTransaction();
