@@ -6,6 +6,7 @@ import { diskStorage } from "multer";
 
 import { FilesService } from './files.service';
 import { fileFilter, fileFilterNamer } from './helpers/index';
+import { Auth } from 'src/auth/decorators/auth.decorator';
 
 @Controller('files')
 export class FilesController {
@@ -24,6 +25,7 @@ export class FilesController {
   }
 
   @Post('product')
+  @Auth()
   @UseInterceptors( FileInterceptor('file', {
     fileFilter : fileFilter,
     storage   : diskStorage({

@@ -32,6 +32,7 @@ export class ProductsController {
   of the request. It is calling the findAll method in the productsService and passing in the
   PaginationDto object. */
   @Get()
+  @Auth()
   findAll( @Query() paginationDto:PaginationDto ) {
     return this.productsService.findAll( paginationDto );
   }
@@ -40,6 +41,7 @@ export class ProductsController {
   parameter :term. It is calling the findOnePlain method in the productsService and passing in the
   string. */
   @Get(':term')
+  @Auth()
   findOne(@Param('term' ) term: string) {
     return this.productsService.findOnePlain( term );
   }
